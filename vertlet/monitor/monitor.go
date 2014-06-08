@@ -13,6 +13,7 @@ type ContainerMonitor struct {
 	client        *cadvisor.Client
 	stop          chan bool
 	numCores      int
+	createdAt     time.Time
 }
 
 const (
@@ -43,6 +44,7 @@ func NewContainerMonitor(
 		client:        c,
 		stop:          make(chan bool),
 		numCores:      minfo.NumCores,
+		createdAt:     time.Now(),
 	}
 
 	go m.checkContainer(3*time.Second, func(util float64) {
@@ -79,6 +81,8 @@ func (self *ContainerMonitor) checkContainer(
 	callback func(cpuUtil float64),
 ) {
 	var prevStats *info.ContainerStats
+	// Let the container warm up
+	time.Sleep(5 * time.Second)
 	for {
 		cinfo, err := self.client.ContainerInfo(self.containerName)
 		if err != nil {
