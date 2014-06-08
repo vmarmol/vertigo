@@ -1,7 +1,9 @@
 package monitor
 
 import (
+	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/google/lmctfy/cadvisor/client"
@@ -14,6 +16,11 @@ type DockerMonitor struct {
 	cpuLowThreshold  float64
 	cpuHighThreshold float64
 	sigChan          chan<- *MonitorSignal
+	lock             sync.Mutex
+}
+
+type ContainerTracker interface {
+	TrackContainer(id string) error
 }
 
 func StartDockerMonitor(
@@ -21,10 +28,10 @@ func StartDockerMonitor(
 	cpuLowThreshold,
 	cpuHighThreshold float64,
 	sigChan chan<- *MonitorSignal,
-) error {
+) (ContainerTracker, error) {
 	c, err := cadvisor.NewClient(cadvisorUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	m := &DockerMonitor{
 		client:           c,
@@ -34,9 +41,39 @@ func StartDockerMonitor(
 		cpuHighThreshold: cpuHighThreshold,
 		sigChan:          sigChan,
 	}
-	go m.checkDockerContainers()
+	// go m.checkDockerContainers()
 
-	return nil
+	return m, err
+}
+
+func (self *DockerMonitor) TrackContainer(id string) error {
+	cinfo, err := self.client.ContainerInfo("/docker")
+	if err != nil {
+		log.Printf("error: %v", err)
+		return err
+	}
+	cpath := fmt.Sprintf("/docker/%v", id)
+	self.lock.Lock()
+	defer self.lock.Unlock()
+	for _, sub := range cinfo.Subcontainers {
+		if sub == cpath {
+			if _, ok := self.subcontainers[cpath]; ok {
+				return nil
+			}
+			m, err := NewContainerMonitor(
+				self.cadvisorUrl,
+				cpath,
+				self.cpuLowThreshold,
+				self.cpuHighThreshold,
+				self.sigChan)
+			if err != nil {
+				return err
+			}
+			self.subcontainers[cpath] = m
+			return nil
+		}
+	}
+	return fmt.Errorf("cannot find container %v", id)
 }
 
 func (self *DockerMonitor) addSubContainers(containers []string) {
