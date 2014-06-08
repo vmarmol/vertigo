@@ -55,7 +55,9 @@ func (self *MigrationHandler) handleMigrationStart(w http.ResponseWriter, r *htt
 
 	// Start the container.
 	log.Printf("Running image...")
-	err = pul.RunImage(img, nil, request.Command)
+	// FIXME(monnand): Wrong way!
+	args := []string{"-p", "0.0.0.0:80:80"}
+	err = pul.RunImage(img, args, request.Command)
 	if err != nil {
 		log.Fatalf("Error running image: %s", err)
 	}
