@@ -11,6 +11,7 @@ type ContainerMonitor struct {
 	containerName string
 	client        *cadvisor.Client
 	stop          chan bool
+	numCores      int
 }
 
 const (
@@ -34,10 +35,13 @@ func NewContainerMonitor(
 	if err != nil {
 		return nil, err
 	}
+
+	minfo, err := c.MachineInfo()
 	m := &ContainerMonitor{
 		containerName: containerName,
 		client:        c,
 		stop:          make(chan bool),
+		numCores:      minfo.NumCores,
 	}
 
 	go m.checkContainer(3*time.Second, func(util float64) {
@@ -79,7 +83,7 @@ func (self *ContainerMonitor) checkContainer(
 		stats := getLatestStats(cinfo)
 		if prevStats != nil {
 			CpuDiff := stats.Cpu.Usage.Total - prevStats.Cpu.Usage.Total
-			util := float64(CpuDiff) / float64(sleepDuration.Nanoseconds())
+			util := float64(CpuDiff) / float64(sleepDuration.Nanoseconds()*int64(self.numCores))
 			callback(util)
 		}
 		prevStats = stats
