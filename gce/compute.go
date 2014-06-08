@@ -9,8 +9,6 @@ import (
 	"os/user"
 	"path"
 
-	"github.com/kr/pretty"
-
 	"code.google.com/p/goauth2/oauth"
 	"code.google.com/p/google-api-go-client/compute/v1"
 )
@@ -147,6 +145,22 @@ func getImage(spec *VirtualMachineSpec) string {
 }
 
 func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineInfo, error) {
+	/*
+		cloud, err := dockercloud.NewCloudGCE(self.projectId)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get cloud: %v", err)
+		}
+		name := spec.GetName()
+		instance, err := cloud.CreateInstance(name, getZone(spec))
+		if err != nil {
+			return nil, fmt.Errorf("unable to create instance: %v", err)
+		}
+		info := &VirtualMachineInfo{
+			Name:    name,
+			Address: instance,
+		}
+		return info, nil
+	*/
 	service, err := NewCompute()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get compute service: %v", err)
@@ -155,7 +169,10 @@ func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineI
 	prefix := "https://www.googleapis.com/compute/v1/projects/" + self.projectId
 	machineType := getMachineType(spec)
 	// /zones/us-central1-a/machineTypes/n1-standard-1
-	rootDisk := getImage(spec)
+	imgSrc := fmt.Sprintf("%v/zones/%v/disks/%v", prefix, zone, getImage(spec))
+	fmt.Printf("image src: %v\n", imgSrc)
+	imgSrc = "https://www.googleapis.com/compute/v1/projects/lmctfy-prod/zones/us-central1-a/disks/docker-root"
+	fmt.Printf("image src: %v\n", imgSrc)
 	instance := &compute.Instance{
 		Name:        spec.GetName(),
 		Description: "virtigo instance",
@@ -174,11 +191,11 @@ func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineI
 				Boot:   true,
 				Type:   "PERSISTENT",
 				Mode:   "READ_WRITE",
-				Source: fmt.Sprintf("%v/zones/%v/disks/%v", prefix, zone, rootDisk),
+				Source: imgSrc,
 			},
 		},
 	}
-	pretty.Printf("%# v\n", instance)
+	// pretty.Printf("%# v\n", instance)
 
 	opt, err := service.Instances.Insert(self.projectId, zone, instance).Do()
 
