@@ -39,11 +39,12 @@ type gceKey struct {
 
 // Gets the OAuth2 token from the current user's gcloud crendentials.
 func getOauthToken() (*gceCredential, error) {
-	usr, err := user.Current()
+	_, err := user.Current()
 	if err != nil {
 		return nil, err
 	}
-	confPath := path.Join(usr.HomeDir, ".config/gcloud/credentials")
+	//confPath := path.Join(usr.HomeDir, ".config/gcloud/credentials")
+	confPath := path.Join("/home/vmarmol", ".config/gcloud/credentials")
 	f, err := os.Open(confPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load gcloud credentials: %q", confPath)

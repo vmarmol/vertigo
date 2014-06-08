@@ -34,6 +34,7 @@ func handleMigrationStart(w http.ResponseWriter, r *http.Request, gceService *co
 	}
 
 	// Start the migration.
+	log.Printf("Warming up...")
 	err = instances.SetInstanceState(instances.StateWarmingUp, hostname, gceService)
 	if err != nil {
 		return err
@@ -47,18 +48,21 @@ func handleMigrationStart(w http.ResponseWriter, r *http.Request, gceService *co
 	}
 
 	// Get the image to start.
+	log.Printf("Importing container...")
 	img, err := pul.Import(importSpec)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Start the container.
+	log.Printf("Running image...")
 	err = pul.RunImage(img, nil, request.Command)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error running image: %s", err)
 	}
 
 	// We're done.
+	log.Printf("Migration complete!")
 	err = instances.SetInstanceState(instances.StateOk, hostname, gceService)
 	if err != nil {
 		return err
