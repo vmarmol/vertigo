@@ -3,6 +3,7 @@ package monitor
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/google/lmctfy/cadvisor/client"
@@ -48,6 +49,7 @@ func StartDockerMonitor(
 }
 
 func (self *DockerMonitor) TrackContainer(id string) error {
+	log.Printf("Tracking %q", id)
 	cinfo, err := self.client.ContainerInfo("/docker")
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -57,20 +59,20 @@ func (self *DockerMonitor) TrackContainer(id string) error {
 	self.lock.Lock()
 	defer self.lock.Unlock()
 	for _, sub := range cinfo.Subcontainers {
-		if sub == cpath {
-			if _, ok := self.subcontainers[cpath]; ok {
+		if strings.HasPrefix(sub, cpath) {
+			if _, ok := self.subcontainers[sub]; ok {
 				return nil
 			}
 			m, err := NewContainerMonitor(
 				self.cadvisorUrl,
-				cpath,
+				sub,
 				self.cpuLowThreshold,
 				self.cpuHighThreshold,
 				self.sigChan)
 			if err != nil {
 				return err
 			}
-			self.subcontainers[cpath] = m
+			self.subcontainers[sub] = m
 			return nil
 		}
 	}

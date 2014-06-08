@@ -93,7 +93,7 @@ func (self *MigrationHandler) RegisterHandlers() {
 		if len(TrackContainer) >= len(r.URL.Path) {
 			fmt.Fprintf(w, "missing container id")
 		}
-		id := path.Base(r.URL.Path)
+		id := r.URL.Path[len(TrackContainer):]
 		err := self.containerTracker.TrackContainer(id)
 		if err != nil {
 			log.Printf("error when tracking: %v", err)
