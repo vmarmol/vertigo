@@ -63,6 +63,13 @@ func (self *MigrationHandler) handleMigration(request MigrationRequest, remoteVe
 	if err != nil {
 		return err
 	}
+
+	// stop tracking first.
+	err = self.containerTracker.StopTrackingContainer(request.Container)
+	if err != nil {
+		return err
+	}
+
 	resp, err := http.Post("http://"+remoteVertlet+MigrationStartHandler, "application/json", bytes.NewReader(encodedRequest))
 	if err != nil {
 		return err
@@ -80,10 +87,6 @@ func (self *MigrationHandler) handleMigration(request MigrationRequest, remoteVe
 	}
 
 	// TODO(vmarmol): Do we rm the container?
-	err = self.containerTracker.StopTrackingContainer(request.Container)
-	if err != nil {
-		return err
-	}
 
 	log.Printf("Request(%s) took %s", MigrationMigrateHandler, time.Since(start))
 	return nil
