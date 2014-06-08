@@ -11,6 +11,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/kr/pretty"
+
 	"code.google.com/p/goauth2/oauth"
 	"code.google.com/p/google-api-go-client/compute/v1"
 )
@@ -141,7 +143,15 @@ func NewGceManager() (VirtualMachineManager, error) {
 }
 
 func getMachineType(spec *VirtualMachineSpec) string {
-	return "n1-standard-2"
+	// XXX(monnand): This is a hack!
+	level := spec.CpuLevel
+	if spec.MemoryLevel > level {
+		level = spec.MemoryLevel
+	}
+	if level != 1 && level != 2 && level != 8 && level != 16 {
+		level = 2
+	}
+	return fmt.Sprintf("n1-standard-%v", level)
 }
 
 func getZone(spec *VirtualMachineSpec) string {
@@ -149,7 +159,10 @@ func getZone(spec *VirtualMachineSpec) string {
 }
 
 func getImage(spec *VirtualMachineSpec) string {
-	return "ubuntu-trusty"
+	if spec.Image == "" {
+		return "ubuntu-trusty"
+	}
+	return spec.Image
 }
 
 func getDiskName(spec *VirtualMachineSpec, instanceName string) string {
@@ -158,6 +171,9 @@ func getDiskName(spec *VirtualMachineSpec, instanceName string) string {
 
 func (self *gceVmManager) waitForOp(op *compute.Operation, zone string) error {
 	op, err := self.service.ZoneOperations.Get(self.projectId, zone, op.Name).Do()
+	if err != nil {
+		return err
+	}
 	for op.Status != "DONE" {
 		time.Sleep(5 * time.Second)
 		op, err = self.service.ZoneOperations.Get(self.projectId, zone, op.Name).Do()
@@ -168,27 +184,14 @@ func (self *gceVmManager) waitForOp(op *compute.Operation, zone string) error {
 			log.Printf("Error waiting for operation: %s\n", op)
 			return errors.New(fmt.Sprintf("Bad operation: %s", op))
 		}
+		if op == nil {
+			return nil
+		}
 	}
 	return err
 }
 
 func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineInfo, error) {
-	/*
-		cloud, err := dockercloud.NewCloudGCE(self.projectId)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get cloud: %v", err)
-		}
-		name := spec.GetName()
-		instance, err := cloud.CreateInstance(name, getZone(spec))
-		if err != nil {
-			return nil, fmt.Errorf("unable to create instance: %v", err)
-		}
-		info := &VirtualMachineInfo{
-			Name:    name,
-			Address: instance,
-		}
-		return info, nil
-	*/
 	zone := getZone(spec)
 	prefix := "https://www.googleapis.com/compute/v1/projects/" + self.projectId
 	machineType := getMachineType(spec)
@@ -197,8 +200,9 @@ func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineI
 	imgSrc := fmt.Sprintf("%v/global/images/%v", prefix, getImage(spec))
 	// fmt.Printf("image src: %v\n", imgSrc)
 	instanceName := spec.GetName()
-	diskName := getDiskName(spec, instanceName)
 
+	// Create the disk
+	diskName := getDiskName(spec, instanceName)
 	opt, err := self.service.Disks.Insert(self.projectId, zone, &compute.Disk{
 		Name: diskName,
 	}).SourceImage(imgSrc).Do()
@@ -210,6 +214,8 @@ func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineI
 		return nil, fmt.Errorf("unable to create disk(): %v", err)
 	}
 	disklink := opt.TargetLink
+
+	// Create the instance
 	instance := &compute.Instance{
 		Name:        instanceName,
 		Description: "virtigo instance",
@@ -233,6 +239,9 @@ func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineI
 		},
 	}
 	// pretty.Printf("%# v\n", instance)
+	fmt.Printf("instance %v\n", instanceName)
+
+	instanceUri := fmt.Sprintf("%v/zones/%v/instances/%v", prefix, zone, instanceName)
 
 	opt, err = self.service.Instances.Insert(self.projectId, zone, instance).Do()
 
@@ -247,5 +256,40 @@ func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineI
 	info := &VirtualMachineInfo{
 		Name: opt.Name,
 	}
+
+	targetPool := "vertigo-lb-pool"
+	region := "us-central1"
+	req := &compute.TargetPoolsAddInstanceRequest{}
+	req.Instances = make([]*compute.InstanceReference, 1)
+	req.Instances[0] = &compute.InstanceReference{}
+	req.Instances[0].Instance = instanceUri
+	opt, err = self.service.TargetPools.AddInstance(
+		self.projectId,
+		region,
+		targetPool,
+		req,
+		/*
+			&compute.TargetPoolsAddInstanceRequest{
+				[]*compute.InstanceReference{
+					&compute.InstanceReference{
+						Instance: instanceUri,
+					},
+				},
+			},
+		*/
+	).Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to add instance into target pool. api error: %v", err)
+	}
+	pretty.Printf("% #v\n", opt)
+	/*
+		if opt != nil {
+			err = self.waitForOp(opt, zone)
+			if err != nil {
+				return nil, fmt.Errorf("unable to add instance into target pool. opt error: %v", err)
+			}
+		}
+	*/
+
 	return info, nil
 }
