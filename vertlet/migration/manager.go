@@ -76,6 +76,7 @@ var TrackContainer = "/track/"
 
 func (self *MigrationHandler) RegisterHandlers() {
 	http.HandleFunc(MigrationStartHandler, func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
 		err := self.handleMigrationStart(w, r)
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
@@ -84,10 +85,14 @@ func (self *MigrationHandler) RegisterHandlers() {
 
 	http.HandleFunc(TrackContainer, func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
+		if len(TrackContainer) >= len(r.URL.Path) {
+			fmt.Fprintf(w, "missing container id")
+		}
 		id := path.Base(r.URL.Path)
 		err := self.containerTracker.TrackContainer(id)
 		if err != nil {
-			log.Printf("error when tracking: %v")
+			log.Printf("error when tracking: %v", err)
+			fmt.Fprintf(w, "Error: %v", err)
 		}
 	})
 
