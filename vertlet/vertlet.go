@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/vmarmol/vertigo/gce"
+	"github.com/vmarmol/vertigo/vertlet/export"
 	"github.com/vmarmol/vertigo/vertlet/migration"
 )
 
@@ -19,6 +20,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = export.Register()
+	if err != nil {
+		log.Fatal(err)
+	}
 	migration.RegisterHandlers(gceService)
 
 	log.Print("About to serve on port ", *argPort)
