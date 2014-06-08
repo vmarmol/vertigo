@@ -7,9 +7,10 @@ import (
 // TODO(vmarmol): In real life, we'd probably discover this.
 // Map of instance name to number of cores.
 var instanceMapping = map[string]int{
-	"vertigo-0": 1,
-	"vertigo-1": 2,
-	"vertigo-2": 4,
+	"vertigo-demo-0": 1,
+	"vertigo-demo-1": 2,
+	"vertigo-demo-2": 4,
+	"vertigo-demo-3": 8,
 }
 
 // Get an instance one size larger than the specified instance.
