@@ -78,9 +78,21 @@ func (self *DockerMonitor) TrackContainer(id string) error {
 }
 
 func (self *DockerMonitor) StopTrackingContainer(id string) error {
+	cpath := fmt.Sprintf("/docker/%v", id)
+	self.lock.Lock()
+	defer self.lock.Unlock()
+	if m, ok := self.subcontainers[cpath]; ok {
+		m.Stop()
+		delete(self.subcontainers, cpath)
+	} else {
+		return fmt.Errorf("unknown container %v", id)
+	}
 	return nil
 }
 
 func (self *DockerMonitor) GetTrackedContainer() string {
+	for id, _ := range self.subcontainers {
+		return id
+	}
 	return ""
 }
