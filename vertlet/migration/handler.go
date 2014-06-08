@@ -32,12 +32,12 @@ func RegisterHandlers(gceService *compute.Service) {
 
 	http.HandleFunc(MigrationMigrateHandler, func(w http.ResponseWriter, r *http.Request) {
 		request := MigrationRequest{
-			Container: "",
-			Host:      "",
+			Container: "c7d4f0543e92",
+			Host:      "vertigo-0",
 			Port:      8080,
-			Command:   []string{"/bin/true"},
+			Command:   []string{"/bin/sleep", "2m"},
 		}
-		err := handleMigration(request, "", gceService)
+		err := handleMigration(request, "vertigo-1:8080", gceService)
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 		}

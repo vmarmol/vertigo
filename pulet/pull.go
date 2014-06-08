@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"os/exec"
 	"os/user"
 	"time"
@@ -49,7 +50,7 @@ func (self *Pulet) Import(spec *ImportSpec) (*ImageSpec, error) {
 		Tag:  randomUniqString(),
 	}
 	alias := fmt.Sprintf("%v:%v", imgSpec.Repo, imgSpec.Tag)
-	fmt.Printf("docker import %v %v", importUrl, alias)
+	log.Printf("docker import %v %v", importUrl, alias)
 	cmd := exec.Command("docker", "import", importUrl, alias)
 	err := cmd.Run()
 	if err != nil {
@@ -64,15 +65,11 @@ func (self *Pulet) RunImage(img *ImageSpec, runArgs []string, cmdList []string) 
 	alias := fmt.Sprintf("%v:%v", img.Repo, img.Tag)
 	args := make([]string, 0, len(runArgs)+len(cmdList)+2)
 	args = append(args, "run")
-	for _, arg := range runArgs {
-		args = append(args, arg)
-	}
+	args = append(args, runArgs...)
 	args = append(args, alias)
-	for _, arg := range cmdList {
-		args = append(args, arg)
-	}
+	args = append(args, cmdList...)
 
-	fmt.Printf("docker %+v", args)
+	log.Printf("docker %+v", args)
 	cmd := exec.Command("docker", args...)
 	err := cmd.Run()
 	if err != nil {
