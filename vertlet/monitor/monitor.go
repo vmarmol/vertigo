@@ -40,7 +40,7 @@ func NewContainerMonitor(
 		stop:          make(chan bool),
 	}
 
-	m.checkContainer(3*time.Second, func(util float64) {
+	go m.checkContainer(3*time.Second, func(util float64) {
 		sig := &MonitorSignal{
 			ContainerName: containerName,
 		}
