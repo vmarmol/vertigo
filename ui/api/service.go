@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var url = flag.String("url", "http://107.178.208.130:80", "Url to serve traffic to.")
+var url = flag.String("url", "http://107.178.208.130:80/burn", "Url to serve traffic to.")
 var initQps = flag.Int("init_qps", 1, "Number of queries per second to initially send.")
 
 var nsInSecond = int64(1000 * 1000 * 1000)

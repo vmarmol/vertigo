@@ -49,12 +49,13 @@ func NewContainerMonitor(
 		sig := &MonitorSignal{
 			ContainerName: containerName,
 		}
-		log.Printf("container %v, cpu util: %v\n", containerName, util)
+		log.Printf("container %v, cpu util: %v; [%v,%v]\n", containerName, util, cpuLowThreshold, cpuHighThreshold)
 		if util > cpuHighThreshold {
 			sig.MoveDst = DST_HIGHER
 		} else if util < cpuLowThreshold {
 			sig.MoveDst = DST_LOWER
 		}
+		sigChan <- sig
 	})
 	return m, nil
 }
