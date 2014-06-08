@@ -63,8 +63,9 @@ func (self *Pulet) Import(spec *ImportSpec) (*ImageSpec, error) {
 // cmdList: command runs in the container
 func (self *Pulet) RunImage(img *ImageSpec, runArgs []string, cmdList []string) error {
 	alias := fmt.Sprintf("%v:%v", img.Repo, img.Tag)
-	args := make([]string, 0, len(runArgs)+len(cmdList)+2)
+	args := make([]string, 0, len(runArgs)+len(cmdList)+3)
 	args = append(args, "run")
+	args = append(args, "-d")
 	args = append(args, runArgs...)
 	args = append(args, alias)
 	args = append(args, cmdList...)
