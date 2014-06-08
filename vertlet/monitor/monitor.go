@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"log"
 	"time"
 
 	"github.com/google/lmctfy/cadvisor/client"
@@ -48,6 +49,7 @@ func NewContainerMonitor(
 		sig := &MonitorSignal{
 			ContainerName: containerName,
 		}
+		log.Printf("container %v, cpu util: %v\n", containerName, util)
 		if util > cpuHighThreshold {
 			sig.MoveDst = DST_HIGHER
 		} else if util < cpuLowThreshold {
