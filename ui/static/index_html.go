@@ -20,10 +20,58 @@ var indexHtml = `
 	<script type="text/javascript" src="/static/scripts.js"></script>
 </head>
 <body>
-	<h1>Vertigo</h1>
-	<h2>Vertical scaling of Docker containers</h2>
+	<div class="col-sm-8 class="container theme-showcase">
+		<div class="page-header">
+			<h1>Vertigo <small>Vertical scaling of Docker containers</small></h1>
+		</div>
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h2 class="panel-title">Instances</h2>
+			</div>
+			<div class="panel-body">Running instances answering service queries.</div>
+			<table id="instances" class="table">
+				<tr>
+					<th>Name</th>
+					<th>State</th>
+					<th>CPU</th>
+					<th>Memory</th>
+					<!-- Cost and QPS? -->
+				</tr>
+				<tr>
+					<td>vertigo-one</td>
+					<td>OK</td>
+					<td>10%</td>
+					<td>50%</td>
+				</tr>
+			</table>
+		</div>
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h2 class="panel-title">Service</h2>
+			</div>
+			<div class="panel-body">Controls and stats for the running service.</div>
+			<table id="service" class="table">
+				<tr>
+					<td>Uptime</td>
+					<td id="service-uptime" style="font-style:italic">10s</td>
+				</tr>
+				<tr>
+					<td id="service-uptime">QPS</td>
+					<td>
+						<div class="input-group">
+							<input id="service-qps" type="text" class="form-control">
+							<span class="input-group-btn">
+								<button class="btn btn-default" type="button" onclick="saveQps()">Save</button>
+							</span>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
 	<script type="text/javascript">
 		startPage();
 	</script>
 </body>
+</html>
 `
