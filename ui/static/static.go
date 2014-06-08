@@ -10,6 +10,8 @@ const StaticResource = "/static/"
 
 var staticFiles = map[string]string{
 	"index.html": indexHtml,
+	"styles.css": stylesCss,
+	"scripts.js": scriptsJs,
 }
 
 func HandleRequest(w http.ResponseWriter, u *url.URL) error {
