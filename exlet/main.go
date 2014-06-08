@@ -1,11 +1,16 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
 )
 
+var argPort = flag.Int("port", 8080, "port")
+
 func main() {
+	flag.Parse()
 	taskManager, err := NewDockerTaskManager()
 	if err != nil {
 		log.Fatal(err)
@@ -18,5 +23,6 @@ func main() {
 	}
 	http.Handle("/task", rest)
 	http.Handle("/export/", export)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	addr := fmt.Sprintf(":%v", *argPort)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
