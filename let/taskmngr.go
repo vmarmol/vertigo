@@ -99,5 +99,11 @@ func (self *DockerTaskManager) RunContainer(runspec *api.RunSpec) (containerSpec
 	err = self.client.StartContainer(container.ID, &docker.HostConfig{
 		PortBindings: portBindings,
 	})
+	if err != nil {
+		return
+	}
+	containerSpec = &api.ContainerSpec{
+		Id: container.ID,
+	}
 	return
 }
