@@ -10,6 +10,7 @@ import (
 	"github.com/vmarmol/vertigo/gce"
 	"github.com/vmarmol/vertigo/ui/api"
 	"github.com/vmarmol/vertigo/ui/static"
+	"github.com/vmarmol/vertigo/ui/vertigo"
 )
 
 var argPort = flag.Int("port", 8080, "port to listen")
@@ -38,6 +39,7 @@ func main() {
 	})
 
 	api.RegisterServiceHandlers()
+	vertigo.RegisterHandlers(gceService)
 
 	// Redirect / to /static/index.html.
 	http.Handle("/", http.RedirectHandler(path.Join("/", static.StaticResource, "/index.html"), http.StatusTemporaryRedirect))
