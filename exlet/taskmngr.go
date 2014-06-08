@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/fsouza/go-dockerclient"
-	"github.com/vmarmol/vertigo/let/api"
+	"github.com/vmarmol/vertigo/exlet/api"
 )
 
 type DockerTaskManager struct {
