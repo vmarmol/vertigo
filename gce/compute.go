@@ -9,6 +9,8 @@ import (
 	"os/user"
 	"path"
 
+	"github.com/kr/pretty"
+
 	"code.google.com/p/goauth2/oauth"
 	"code.google.com/p/google-api-go-client/compute/v1"
 )
@@ -121,6 +123,11 @@ func NewGceManager() (VirtualMachineManager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to get project id: %v", err)
 	}
+	if projectId == "" {
+		// XXX(monnand): Wrong
+		projectId = "lmctfy-prod"
+	}
+	fmt.Printf("project id: %v\n", projectId)
 	ret := &gceVmManager{
 		projectId: projectId,
 	}
@@ -135,28 +142,43 @@ func getZone(spec *VirtualMachineSpec) string {
 	return "us-central1-a"
 }
 
+func getImage(spec *VirtualMachineSpec) string {
+	return "ubuntu-trusty"
+}
+
 func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineInfo, error) {
 	service, err := NewCompute()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get compute service: %v", err)
 	}
 	zone := getZone(spec)
-	prefix := "https://www.googleapis.com/compute/v1/projects" + self.projectId
+	prefix := "https://www.googleapis.com/compute/v1/projects/" + self.projectId
 	machineType := getMachineType(spec)
+	// /zones/us-central1-a/machineTypes/n1-standard-1
+	rootDisk := getImage(spec)
 	instance := &compute.Instance{
 		Name:        spec.GetName(),
 		Description: "virtigo instance",
 		Zone:        fmt.Sprintf("%v/zones/%v", prefix, zone),
-		MachineType: fmt.Sprintf("%v/machine-types/%v", machineType),
+		MachineType: fmt.Sprintf("%v/zones/%v/machineTypes/%v", prefix, zone, machineType),
 		NetworkInterfaces: []*compute.NetworkInterface{
 			&compute.NetworkInterface{
 				AccessConfigs: []*compute.AccessConfig{
 					&compute.AccessConfig{Type: "ONE_TO_ONE_NAT"},
 				},
-				Network: prefix + "/networks/default",
+				Network: prefix + "/global/networks/default",
+			},
+		},
+		Disks: []*compute.AttachedDisk{
+			{
+				Boot:   true,
+				Type:   "PERSISTENT",
+				Mode:   "READ_WRITE",
+				Source: fmt.Sprintf("%v/zones/%v/disks/%v", prefix, zone, rootDisk),
 			},
 		},
 	}
+	pretty.Printf("%# v\n", instance)
 
 	opt, err := service.Instances.Insert(self.projectId, zone, instance).Do()
 
