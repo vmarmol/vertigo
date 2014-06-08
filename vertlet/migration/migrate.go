@@ -13,8 +13,6 @@ import (
 )
 
 func (self *MigrationHandler) Migrate(container string, migrateUp bool) error {
-	log.Printf("Migrating container %q", container)
-
 	// Get the command from Docker.
 	cont, err := self.dockerClient.InspectContainer(container)
 	if err != nil {
@@ -45,6 +43,8 @@ func (self *MigrationHandler) Migrate(container string, migrateUp bool) error {
 		}
 	}
 	destination = fmt.Sprintf("%s:%d", destination, request.Port)
+
+	log.Printf("Migrating container %q to %q", container, destination)
 
 	return self.handleMigration(request, destination)
 }
