@@ -24,7 +24,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	migration.RegisterHandlers(gceService)
+	mig, err := migration.NewMigrationHandler(*argPort, gceService)
+	if err != nil {
+		log.Fatal(err)
+	}
+	mig.RegisterHandlers()
 
 	log.Print("About to serve on port ", *argPort)
 	addr := fmt.Sprintf(":%v", *argPort)

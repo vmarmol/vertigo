@@ -3,20 +3,47 @@ package migration
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 
-	"code.google.com/p/google-api-go-client/compute/v1"
 	"github.com/vmarmol/vertigo/instances"
 )
 
-func handleMigration(request MigrationRequest, remoteVertlet string, gceService *compute.Service) error {
+func (self *MigrationHandler) Migrate(container string, command []string, migrateUp bool) error {
+	request := MigrationRequest{
+		Container: container,
+		Host:      self.hostname,
+		Port:      self.port,
+		Command:   command,
+	}
+
+	// Find where to migrate to.
+	var destination string
+	var err error
+	if migrateUp {
+		destination, err = instances.GetLargerInstance(self.hostname)
+		if err != nil {
+			return err
+		}
+	} else {
+		destination, err = instances.GetSmallerInstance(self.hostname)
+		if err != nil {
+			return err
+		}
+	}
+	destination = fmt.Sprintf("%s:%d", destination, request.Port)
+
+	return self.handleMigration(request, destination)
+}
+
+func (self *MigrationHandler) handleMigration(request MigrationRequest, remoteVertlet string) error {
 	start := time.Now()
 
 	// Signal that the migration has begun.
-	err := instances.SetInstanceState(instances.StateMigrating, hostname, gceService)
+	err := instances.SetInstanceState(instances.StateMigrating, self.hostname, self.gceService)
 	if err != nil {
 		return err
 	}
@@ -37,7 +64,7 @@ func handleMigration(request MigrationRequest, remoteVertlet string, gceService 
 	}
 
 	// The remote Vertlet finished, "turn-down" the instance, clear the Vertigo state.
-	err = instances.ClearVertigoState(hostname, gceService)
+	err = instances.ClearVertigoState(self.hostname, self.gceService)
 	if err != nil {
 		return err
 	}

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"code.google.com/p/google-api-go-client/compute/v1"
 	"github.com/vmarmol/vertigo/instances"
 	"github.com/vmarmol/vertigo/pulet"
 )
@@ -19,7 +18,7 @@ type MigrationRequest struct {
 	Command   []string
 }
 
-func handleMigrationStart(w http.ResponseWriter, r *http.Request, gceService *compute.Service) error {
+func (self *MigrationHandler) handleMigrationStart(w http.ResponseWriter, r *http.Request) error {
 	start := time.Now()
 
 	// Get request from the body.
@@ -35,7 +34,7 @@ func handleMigrationStart(w http.ResponseWriter, r *http.Request, gceService *co
 
 	// Start the migration.
 	log.Printf("Warming up...")
-	err = instances.SetInstanceState(instances.StateWarmingUp, hostname, gceService)
+	err = instances.SetInstanceState(instances.StateWarmingUp, self.hostname, self.gceService)
 	if err != nil {
 		return err
 	}
@@ -63,7 +62,7 @@ func handleMigrationStart(w http.ResponseWriter, r *http.Request, gceService *co
 
 	// We're done.
 	log.Printf("Migration complete!")
-	err = instances.SetInstanceState(instances.StateOk, hostname, gceService)
+	err = instances.SetInstanceState(instances.StateOk, self.hostname, self.gceService)
 	if err != nil {
 		return err
 	}
