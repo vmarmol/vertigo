@@ -42,6 +42,10 @@ var indexHtml = `
 					<td id="service-uptime" style="font-style:italic">Updating...</td>
 				</tr>
 				<tr>
+					<td>Latency</td>
+					<td id="service-latency" style="font-style:italic">Updating...</td>
+				</tr>
+				<tr>
 					<td id="service-uptime">QPS</td>
 					<td>
 						<div class="input-group">

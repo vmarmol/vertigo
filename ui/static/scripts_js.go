@@ -21,8 +21,7 @@ function updateInstances() {
 			.append($("<tr>")
 				.append($("<th>").text("Name"))
 				.append($("<th>").text("State"))
-				.append($("<th>").text("CPU"))
-				.append($("<th>").text("Memory")));
+				.append($("<th>").text("CPU"));
 
 		// Add a row per instance.
 		for (var i = 0; i < data.length; i++) {
@@ -30,8 +29,7 @@ function updateInstances() {
 			table.append($("<tr>")
 				.append($("<td>").text(instance.name))
 				.append($("<td>").append(getStateNode(instance.state)))
-				.append($("<td>").text(instance.cpu_usage + "%"))
-				.append($("<td>").text(instance.memory_usage + "%")));
+				.append($("<td>").text(instance.cpu_usage + "%"));
 		}
 
 		$("#instances").empty().append(table);
@@ -42,6 +40,7 @@ function updateInstances() {
 function updateUptime() {
 	$.getJSON("/api/uptime", function(data) {
 		$("#service-uptime").empty().text(data.uptime);
+		$("#service-latency").empty().text(data.latency);
 	}).fail(function(jqxhr, textStatus, error) {console.log("failed: " + textStatus + ", " + error)});
 }
 
