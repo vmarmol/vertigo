@@ -26,6 +26,32 @@ type Instance struct {
 	State string
 }
 
+func ClearVertigoState(instance string, serv *compute.Service) error {
+	inst, err := serv.Instances.Get(*gceProject, *gceZone, instance).Do()
+	if err != nil {
+		return err
+	}
+
+	// Remove the Vertigo tag.
+	for i, data := range inst.Metadata.Items {
+		if data.Key == VertigoTag {
+			inst.Metadata.Items = append(inst.Metadata.Items[:i], inst.Metadata.Items[i+1:]...)
+			break
+		}
+	}
+
+	// Update the state.
+	op, err := serv.Instances.SetMetadata(*gceProject, *gceZone, instance, inst.Metadata).Do()
+	if err != nil {
+		return nil
+	}
+	if op.Error != nil {
+		return fmt.Errorf("failed to clear Vertigo state for %q: %s", instance, op.Error)
+	}
+
+	return nil
+}
+
 // Sets the state of the instance.
 func SetInstanceState(state, instance string, serv *compute.Service) error {
 	inst, err := serv.Instances.Get(*gceProject, *gceZone, instance).Do()
