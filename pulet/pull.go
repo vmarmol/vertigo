@@ -61,7 +61,7 @@ func (self *Pulet) Import(spec *ImportSpec) (*ImageSpec, error) {
 
 // runArgs: arguments sends after docker run. Something like -p -v, etc.
 // cmdList: command runs in the container
-func (self *Pulet) RunImage(img *ImageSpec, runArgs []string, cmdList []string) error {
+func (self *Pulet) RunImage(img *ImageSpec, runArgs []string, cmdList []string) (string, error) {
 	alias := fmt.Sprintf("%v:%v", img.Repo, img.Tag)
 	args := make([]string, 0, len(runArgs)+len(cmdList)+3)
 	args = append(args, "run")
@@ -72,9 +72,10 @@ func (self *Pulet) RunImage(img *ImageSpec, runArgs []string, cmdList []string) 
 
 	log.Printf("docker %+v", args)
 	cmd := exec.Command("docker", args...)
-	err := cmd.Run()
+	output, err := cmd.Output()
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	log.Printf("output of docker: %v\n", string(output))
+	return string(output), nil
 }

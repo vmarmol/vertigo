@@ -57,7 +57,7 @@ func (self *MigrationHandler) handleMigrationStart(w http.ResponseWriter, r *htt
 	log.Printf("Running image...")
 	// FIXME(monnand): Wrong way!
 	args := []string{"-p", "0.0.0.0:80:80"}
-	err = pul.RunImage(img, args, request.Command)
+	containerId, err := pul.RunImage(img, args, request.Command)
 	if err != nil {
 		log.Fatalf("Error running image: %s", err)
 	}
@@ -66,11 +66,14 @@ func (self *MigrationHandler) handleMigrationStart(w http.ResponseWriter, r *htt
 	log.Printf("Migration complete!")
 	err = instances.SetInstanceState(instances.StateOk, self.hostname, self.gceService)
 	if err != nil {
+		log.Printf("SetInstanceState error: %v\n", err)
 		return err
 	}
 
-	err = self.containerTracker.TrackContainer(request.Container)
+	log.Printf("Tracking the container! %+v\n", containerId)
+	err = self.containerTracker.TrackContainer(containerId)
 	if err != nil {
+		log.Printf("TrackingContainer error: %v", err)
 		return err
 	}
 
