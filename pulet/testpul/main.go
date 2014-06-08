@@ -19,8 +19,8 @@ func main() {
 		log.Fatal(err)
 	}
 	err = pul.RunImage(img, nil, []string{
-		"touch",
-		"/target.txt",
+		"sleep",
+		"2m",
 	})
 	if err != nil {
 		log.Fatal(err)
