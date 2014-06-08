@@ -16,6 +16,7 @@ var initQps = flag.Int("init_qps", 1, "Number of queries per second to initially
 var nsInSecond = int64(1000 * 1000 * 1000)
 var nanoDelay = nsInSecond
 var uptime = "Initial Uptime (not updated.)"
+var latency = "None."
 
 func sendQueries() {
 	for true {
@@ -25,7 +26,9 @@ func sendQueries() {
 }
 
 func sendOneQuery() {
+	sendTime := time.Now()
 	resp, err := http.Get(*url)
+	latency = time.Since(sendTime).String()
 	if err != nil {
 		log.Printf("%v", err)
 		return
@@ -54,7 +57,7 @@ func RegisterServiceHandlers() {
 	})
 	http.HandleFunc("/api/uptime", func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		fmt.Fprintf(w, "{\"uptime\":%q}", uptime)
+		fmt.Fprintf(w, "{\"uptime\":%q \"latency\":%q}", uptime, latency)
 		log.Printf("Request(/api/uptime) took %s", time.Since(start))
 	})
 	go sendQueries()
