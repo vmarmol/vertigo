@@ -5,30 +5,24 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 
-	"github.com/vmarmol/vertigo/gce"
+	"github.com/vmarmol/vertigo/ui/static"
 )
 
 var argPort = flag.Int("port", 8080, "port to listen")
 
 func main() {
-	compute, err := gce.NewCompute()
-	if err != nil {
-		log.Fatal(err)
-	}
-	ins, err := compute.Instances.List("lmctfy-prod", "us-central1-a").Do()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Instances: %v", ins)
-
-	http.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello world")
+	// Handler for static content.
+	http.HandleFunc(static.StaticResource, func(w http.ResponseWriter, r *http.Request) {
+		err := static.HandleRequest(w, r.URL)
+		if err != nil {
+			fmt.Fprintf(w, "%s", err)
+		}
 	})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello world")
-	})
+	// Redirect / to /static/index.html.
+	http.Handle("/", http.RedirectHandler(path.Join("/", static.StaticResource, "/index.html"), http.StatusTemporaryRedirect))
 
 	addr := fmt.Sprintf(":%v", *argPort)
 	log.Fatal(http.ListenAndServe(addr, nil))
