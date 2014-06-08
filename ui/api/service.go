@@ -21,7 +21,7 @@ var latency = "None."
 func sendQueries() {
 	for true {
 		for nanoDelay == 0 {
-			time.Sleep(nsInSecond)
+			time.Sleep(time.Duration(nsInSecond))
 		}
 		time.Sleep(time.Duration(nanoDelay))
 		go sendOneQuery()
@@ -60,7 +60,7 @@ func RegisterServiceHandlers() {
 			log.Printf("%v", err)
 			return
 		}
-		if (qps == 0) {
+		if qps == 0 {
 			nanoDelay = 0
 		} else {
 			nanoDelay = nsInSecond / int64(qps)
