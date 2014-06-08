@@ -15,6 +15,7 @@ import (
 var argPort = flag.Int("port", 8080, "port to listen")
 
 func main() {
+	flag.Parse()
 	gceService, err := gce.NewCompute()
 	if err != nil {
 		log.Fatal(err)
@@ -36,9 +37,12 @@ func main() {
 		}
 	})
 
+	api.RegisterServiceHandlers()
+
 	// Redirect / to /static/index.html.
 	http.Handle("/", http.RedirectHandler(path.Join("/", static.StaticResource, "/index.html"), http.StatusTemporaryRedirect))
 
+	log.Print("About to serve on port ", *argPort)
 	addr := fmt.Sprintf(":%v", *argPort)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }

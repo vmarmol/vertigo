@@ -29,21 +29,7 @@ var indexHtml = `
 				<h2 class="panel-title">Instances</h2>
 			</div>
 			<div class="panel-body">Running instances answering service queries.</div>
-			<table id="instances" class="table">
-				<tr>
-					<th>Name</th>
-					<th>State</th>
-					<th>CPU</th>
-					<th>Memory</th>
-					<!-- Cost and QPS? -->
-				</tr>
-				<tr>
-					<td>vertigo-one</td>
-					<td>OK</td>
-					<td>10%</td>
-					<td>50%</td>
-				</tr>
-			</table>
+			<div id="instances"></div>
 		</div>
 		<div class="panel panel-primary">
 			<div class="panel-heading">
@@ -53,15 +39,15 @@ var indexHtml = `
 			<table id="service" class="table">
 				<tr>
 					<td>Uptime</td>
-					<td id="service-uptime" style="font-style:italic">10s</td>
+					<td id="service-uptime" style="font-style:italic">Updating...</td>
 				</tr>
 				<tr>
 					<td id="service-uptime">QPS</td>
 					<td>
 						<div class="input-group">
-							<input id="service-qps" type="text" class="form-control">
+							<input id="service-qps" type="text" value="1" class="form-control">
 							<span class="input-group-btn">
-								<button class="btn btn-default" type="button" onclick="saveQps()">Save</button>
+								<button class="btn btn-default" type="button" onclick="saveQps()">Set</button>
 							</span>
 						</div>
 					</td>

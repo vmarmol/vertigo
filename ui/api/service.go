@@ -43,15 +43,19 @@ func sendOneQuery() {
 func RegisterServiceHandlers() {
 	nanoDelay = nsInSecond / int64(*initQps)
 	http.HandleFunc("/api/qps", func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
 		qps, err := strconv.Atoi(r.FormValue("qps"))
 		if err != nil {
 			log.Printf("%v", err)
 			return
 		}
 		nanoDelay = nsInSecond / int64(qps)
+		log.Printf("Request(/api/qps) took %s", time.Since(start))
 	})
-	http.HandleFunc("/api/info", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, uptime)
+	http.HandleFunc("/api/uptime", func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		fmt.Fprintf(w, "{\"uptime\":%q}", uptime)
+		log.Printf("Request(/api/uptime) took %s", time.Since(start))
 	})
 	go sendQueries()
 }
