@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -23,7 +24,10 @@ func (self *taskExport) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c := &api.ContainerSpec{
 			Id: id,
 		}
-		self.taskManager.Export(c, w)
+		err := self.taskManager.Export(c, w)
+		if err != nil {
+			log.Printf("Error when exporting %v: %v\n", id, err)
+		}
 	}
 }
 
