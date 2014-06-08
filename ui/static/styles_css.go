@@ -1,0 +1,4 @@
+package static
+
+var stylesCss = `
+`
