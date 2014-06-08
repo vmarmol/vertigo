@@ -1,8 +1,8 @@
 package api
 
 import (
+	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -43,6 +43,11 @@ func sendOneQuery() {
 	log.Printf("New Uptime: %s", uptime)
 }
 
+type queryInfo struct {
+	Uptime  string `json:"uptime"`
+	Latency string `json:"latency"`
+}
+
 func RegisterServiceHandlers() {
 	nanoDelay = nsInSecond / int64(*initQps)
 	http.HandleFunc("/api/qps", func(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +62,15 @@ func RegisterServiceHandlers() {
 	})
 	http.HandleFunc("/api/uptime", func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		fmt.Fprintf(w, "{\"uptime\":%q \"latency\":%q}", uptime, latency)
+		encoder := json.NewEncoder(w)
+		err := encoder.Encode(&queryInfo{
+			Uptime:  uptime,
+			Latency: latency,
+		})
+		// fmt.Fprintf(w, "{\"uptime\":%q \"latency\":%q}", uptime, latency)
+		if err != nil {
+			log.Printf("unalbe to marshal json: %v", err)
+		}
 		log.Printf("Request(/api/uptime) took %s", time.Since(start))
 	})
 	go sendQueries()
