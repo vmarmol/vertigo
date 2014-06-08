@@ -55,6 +55,28 @@ func getOauthToken() (*gceCredential, error) {
 	return &cache.Data[0].Credential, nil
 }
 
+// Gets the OAuth2 token from the current user's gcloud crendentials.
+func getProjectId() (string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	confPath := path.Join(usr.HomeDir, ".config/gcloud/credentials")
+	f, err := os.Open(confPath)
+	if err != nil {
+		return "", fmt.Errorf("unable to load gcloud credentials: %q", confPath)
+	}
+	defer f.Close()
+	cache := &gcloudCredentialsCache{}
+	if err := json.NewDecoder(f).Decode(cache); err != nil {
+		return "", err
+	}
+	if len(cache.Data) == 0 {
+		return "", fmt.Errorf("no gcloud credentials cached in: %q", confPath)
+	}
+	return cache.Data[0].ProjectId, nil
+}
+
 func NewCompute() (*compute.Service, error) {
 	// Get Oauth2 token.
 	creds, err := getOauthToken()
@@ -88,4 +110,61 @@ func NewCompute() (*compute.Service, error) {
 		return nil, err
 	}
 	return svc, nil
+}
+
+type gceVmManager struct {
+	projectId string
+}
+
+func NewGceManager() (VirtualMachineManager, error) {
+	projectId, err := getProjectId()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get project id: %v", err)
+	}
+	ret := &gceVmManager{
+		projectId: projectId,
+	}
+	return ret, nil
+}
+
+func getMachineType(spec *VirtualMachineSpec) string {
+	return "n1-standard-2"
+}
+
+func getZone(spec *VirtualMachineSpec) string {
+	return "us-central1-a"
+}
+
+func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineInfo, error) {
+	service, err := NewCompute()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get compute service: %v", err)
+	}
+	zone := getZone(spec)
+	prefix := "https://www.googleapis.com/compute/v1/projects" + self.projectId
+	machineType := getMachineType(spec)
+	instance := &compute.Instance{
+		Name:        spec.GetName(),
+		Description: "virtigo instance",
+		Zone:        fmt.Sprintf("%v/zones/%v", prefix, zone),
+		MachineType: fmt.Sprintf("%v/machine-types/%v", machineType),
+		NetworkInterfaces: []*compute.NetworkInterface{
+			&compute.NetworkInterface{
+				AccessConfigs: []*compute.AccessConfig{
+					&compute.AccessConfig{Type: "ONE_TO_ONE_NAT"},
+				},
+				Network: prefix + "/networks/default",
+			},
+		},
+	}
+
+	opt, err := service.Instances.Insert(self.projectId, zone, instance).Do()
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to create vm: %v", err)
+	}
+	info := &VirtualMachineInfo{
+		Name: opt.Name,
+	}
+	return info, nil
 }
