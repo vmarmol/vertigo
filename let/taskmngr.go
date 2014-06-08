@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"os/exec"
 	"sync"
 	"time"
@@ -57,6 +58,7 @@ func (self *DockerTaskManager) RunTask(runspec *api.RunSpec) (containerSpec *api
 	if err != nil {
 		return
 	}
+	log.Println("pulled image")
 
 	exposedPorts := make(map[docker.Port]struct{}, len(runspec.Ports))
 	portBindings := make(map[docker.Port][]docker.PortBinding, len(runspec.Ports))
@@ -95,10 +97,12 @@ func (self *DockerTaskManager) RunTask(runspec *api.RunSpec) (containerSpec *api
 			Cmd:          cmd,
 		},
 	}
+	log.Printf("creating container %+v\n", opts)
 	container, err := self.client.CreateContainer(opts)
 	if err != nil {
 		return
 	}
+	log.Printf("created container %+v\n", container)
 
 	err = self.client.StartContainer(container.ID, &docker.HostConfig{
 		PortBindings: portBindings,
@@ -106,6 +110,7 @@ func (self *DockerTaskManager) RunTask(runspec *api.RunSpec) (containerSpec *api
 	if err != nil {
 		return
 	}
+	log.Printf("started container\n")
 	containerSpec = &api.ContainerSpec{
 		Id: container.ID,
 	}
