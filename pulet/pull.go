@@ -10,11 +10,9 @@ import (
 )
 
 type ImportSpec struct {
-	SourceHost string   `json:"src_host"`
-	SourcePort int      `json:"src_port"`
-	SourceId   string   `json:"src_id"`
-	Cmd        string   `json:"cmd"`
-	Args       []string `json:"args"`
+	SourceHost string `json:"src_host"`
+	SourcePort int    `json:"src_port"`
+	SourceId   string `json:"src_id"`
 }
 
 type ImageSpec struct {
@@ -43,12 +41,9 @@ func (self *Pulet) Import(spec *ImportSpec) (*ImageSpec, error) {
 		Tag:  randomUniqString(),
 	}
 	alias := fmt.Sprintf("%v:%v", imgSpec.Repo, imgSpec.Tag)
+	fmt.Printf("docker import %v %v", importUrl, alias)
 	cmd := exec.Command("docker", "import", importUrl, alias)
 	err := cmd.Run()
-	if err != nil {
-		return nil, err
-	}
-	err = cmd.Wait()
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +64,9 @@ func (self *Pulet) RunImage(img *ImageSpec, runArgs []string, cmdList []string) 
 		args = append(args, arg)
 	}
 
+	fmt.Printf("docker %+v", args)
 	cmd := exec.Command("docker", args...)
 	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-	err = cmd.Wait()
 	if err != nil {
 		return err
 	}
