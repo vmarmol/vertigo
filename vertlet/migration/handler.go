@@ -10,6 +10,7 @@ import (
 )
 
 var MigrationStartHandler = "/migration/start"
+var MigrationMigrateHandler = "/migration/migrate"
 var MigrationDoneHandler = "/migration/done"
 
 var hostname = ""
@@ -32,6 +33,13 @@ func RegisterHandlers(gceService *compute.Service) {
 
 	http.HandleFunc(MigrationDoneHandler, func(w http.ResponseWriter, r *http.Request) {
 		err := handleMigrationDone(w, r.URL, gceService)
+		if err != nil {
+			fmt.Fprintf(w, "%s", err)
+		}
+	})
+
+	http.HandleFunc(MigrationMigrateHandler, func(w http.ResponseWriter, r *http.Request) {
+		err := handleMigration("TODO", w, gceService)
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 		}

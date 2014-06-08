@@ -2,13 +2,14 @@ package migration
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"code.google.com/p/google-api-go-client/compute/v1"
 	"github.com/vmarmol/vertigo/instances"
 )
 
-func migrationTriggered(gceService *compute.Service) error {
+func handleMigration(container string, w http.ResponseWriter, gceService *compute.Service) error {
 	start := time.Now()
 
 	// Signal that the migration has begun.
@@ -17,8 +18,12 @@ func migrationTriggered(gceService *compute.Service) error {
 		return err
 	}
 
-	// Tell the remote Vertlet to begin.
+	// Stop the container.
+	// TODO(vmarmol):
 
-	log.Printf("Request(Migration Triggered) took %s", time.Since(start))
+	// Tell the remote Vertlet to begin.
+	// TODO(vmarmol)
+
+	log.Printf("Request(%s) took %s", MigrationMigrateHandler, time.Since(start))
 	return nil
 }

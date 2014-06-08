@@ -20,8 +20,10 @@ func handleMigrationStart(w http.ResponseWriter, r *url.URL, gceService *compute
 	}
 
 	// Get the image to start.
+	// TODO(vmarmol):
 
 	// Start the container.
+	// TODO(vmarmol)
 
 	// We're done
 	err = instances.SetInstanceState(instances.StateOk, hostname, gceService)
