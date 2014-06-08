@@ -57,6 +57,7 @@ func NewMigrationHandler(port int, gceService *compute.Service) (*MigrationHandl
 
 	go func() {
 		for sig := range sigChan {
+			log.Printf("recieved migration signal: migorate %v to %v", sig.ContainerName, sig.MoveDst)
 			id := path.Base(sig.ContainerName)
 			switch sig.MoveDst {
 			case monitor.DST_LOWER:
