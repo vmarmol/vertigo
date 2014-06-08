@@ -12,7 +12,18 @@ import (
 	"github.com/vmarmol/vertigo/instances"
 )
 
-func (self *MigrationHandler) Migrate(container string, command []string, migrateUp bool) error {
+func (self *MigrationHandler) Migrate(container string, migrateUp bool) error {
+	log.Printf("Migrating container %q", container)
+
+	// Get the command from Docker.
+	cont, err := self.dockerClient.InspectContainer(container)
+	if err != nil {
+		return err
+	}
+	command := make([]string, 0, len(cont.Args)+1)
+	command = append(command, cont.Path)
+	command = append(command, cont.Args...)
+
 	request := MigrationRequest{
 		Container: container,
 		Host:      self.hostname,
@@ -22,7 +33,6 @@ func (self *MigrationHandler) Migrate(container string, command []string, migrat
 
 	// Find where to migrate to.
 	var destination string
-	var err error
 	if migrateUp {
 		destination, err = instances.GetLargerInstance(self.hostname)
 		if err != nil {

@@ -6,12 +6,14 @@ import (
 	"os"
 
 	"code.google.com/p/google-api-go-client/compute/v1"
+	"github.com/fsouza/go-dockerclient"
 )
 
 type MigrationHandler struct {
-	port       int
-	gceService *compute.Service
-	hostname   string
+	port         int
+	gceService   *compute.Service
+	hostname     string
+	dockerClient *docker.Client
 }
 
 func NewMigrationHandler(port int, gceService *compute.Service) (*MigrationHandler, error) {
@@ -19,10 +21,15 @@ func NewMigrationHandler(port int, gceService *compute.Service) (*MigrationHandl
 	if err != nil {
 		return nil, err
 	}
+	client, err := docker.NewClient("unix:///var/run/docker.sock")
+	if err != nil {
+		return nil, err
+	}
 	return &MigrationHandler{
-		port:       port,
-		gceService: gceService,
-		hostname:   name,
+		port:         port,
+		gceService:   gceService,
+		hostname:     name,
+		dockerClient: client,
 	}, nil
 }
 
@@ -38,7 +45,10 @@ func (self *MigrationHandler) RegisterHandlers() {
 	})
 
 	http.HandleFunc(MigrationMigrateHandler, func(w http.ResponseWriter, r *http.Request) {
-		err := self.Migrate("c7d4f0543e92", []string{"/bin/sleep", "2m"}, true)
+		if len(MigrationMigrateHandler) >= len(r.URL.Path) {
+			fmt.Fprintf(w, "Missing container name")
+		}
+		err := self.Migrate(r.URL.Path[len(MigrationMigrateHandler)+1:], true)
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 		}
