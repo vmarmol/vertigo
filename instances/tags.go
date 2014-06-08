@@ -2,6 +2,7 @@ package instances
 
 import (
 	"fmt"
+	"log"
 
 	"code.google.com/p/google-api-go-client/compute/v1"
 )
@@ -45,6 +46,7 @@ func ClearVertigoState(instance string, serv *compute.Service) error {
 
 // Sets the state of the instance.
 func SetInstanceState(state, instance string, serv *compute.Service) error {
+	log.Printf("Set state of %q to %q", instance, state)
 	inst, err := serv.Instances.Get(*gceProject, *gceZone, instance).Do()
 	if err != nil {
 		return err

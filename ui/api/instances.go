@@ -83,6 +83,7 @@ func GetInstances(serv *compute.Service, w http.ResponseWriter) error {
 	}
 	output := make([]Instance, 0, len(instances))
 	for _, instance := range instances {
+		log.Printf("Instance: %q", instance)
 		cpu, mem, err := getUsage(instance.Name)
 		if err != nil {
 			return err
