@@ -45,6 +45,7 @@ func getUsage(instance string) (int, int, error) {
 	trackedId := tracked.Tracked
 
 	// Get the usage from cAdvisor.
+	log.Printf("Instance %q is tracking: %q", instance, trackedId)
 	c, err := cadvisor.NewClient(fmt.Sprintf("http://%s:5000/", instance))
 	if err != nil {
 		return -1, -1, err
@@ -63,9 +64,8 @@ func getUsage(instance string) (int, int, error) {
 	if err != nil {
 		return -1, -1, err
 	}
-
 	cpuUsage := cinfo.Stats[statsLen-1].Cpu.Usage.Total - cinfo.Stats[statsLen-2].Cpu.Usage.Total
-	return int(cpuUsage) * 100 / m.NumCores, int(int64(cinfo.Stats[statsLen-1].Memory.Usage) * int64(100) / m.MemoryCapacity), nil
+	return int(cpuUsage*uint64(100)/1000000000) / m.NumCores, int(int64(cinfo.Stats[statsLen-1].Memory.Usage) * int64(100) / m.MemoryCapacity), nil
 }
 
 func GetInstances(serv *compute.Service, w http.ResponseWriter) error {
