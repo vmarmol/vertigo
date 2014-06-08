@@ -91,6 +91,8 @@ func (self *DockerMonitor) StopTrackingContainer(id string) error {
 }
 
 func (self *DockerMonitor) GetTrackedContainer() string {
+	self.lock.Lock()
+	defer self.lock.Unlock()
 	for id, _ := range self.subcontainers {
 		return id
 	}
