@@ -20,7 +20,11 @@ type DockerTaskManager struct {
 
 var endpoint = "unix:///var/run/docker.sock"
 
-func NewDockerTaskManager() (*DockerTaskManager, error) {
+type TaskManager interface {
+	RunTask(runspec *api.RunSpec) (containerSpec *api.ContainerSpec, err error)
+}
+
+func NewDockerTaskManager() (TaskManager, error) {
 	client, err := docker.NewClient(endpoint)
 	if err != nil {
 		return nil, err
@@ -48,7 +52,7 @@ func randomUniqString() string {
 	return fmt.Sprintf("%x-%v", time.Now().Unix(), str)
 }
 
-func (self *DockerTaskManager) RunContainer(runspec *api.RunSpec) (containerSpec *api.ContainerSpec, err error) {
+func (self *DockerTaskManager) RunTask(runspec *api.RunSpec) (containerSpec *api.ContainerSpec, err error) {
 	err = self.pull(runspec.Image)
 	if err != nil {
 		return
