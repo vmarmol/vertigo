@@ -1,6 +1,18 @@
 package static
 
 var scriptsJs = `
+function getStateNode(state) {
+	if (state == "ok") {
+		return $("<span>").addClass("label label-success").text("ok");
+	} else if (state == "warming-up") {
+		return $("<span>").addClass("label label-warning").text("warming up");
+	} else if (state == "migrating") {
+		return $("<span>").addClass("label label-default").text("migrating");
+	} else {
+		return $("<span>").addClass("label label-danger").text("unknown");
+	}
+}
+
 // Gets and updates the Vertigo instances.
 function updateInstances() {
 	$.getJSON("/api/instances", function(data) {
@@ -17,7 +29,7 @@ function updateInstances() {
 			var instance = data[i];
 			table.append($("<tr>")
 				.append($("<td>").text(instance.name))
-				.append($("<td>").text(instance.state))
+				.append($("<td>").append(getStateNode(instance.state)))
 				.append($("<td>").text(instance.cpu_usage + "%"))
 				.append($("<td>").text(instance.memory_usage + "%")));
 		}
