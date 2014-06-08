@@ -2,12 +2,14 @@ package gce
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/user"
 	"path"
+	"time"
 
 	"code.google.com/p/goauth2/oauth"
 	"code.google.com/p/google-api-go-client/compute/v1"
@@ -114,6 +116,7 @@ func NewCompute() (*compute.Service, error) {
 
 type gceVmManager struct {
 	projectId string
+	service   *compute.Service
 }
 
 func NewGceManager() (VirtualMachineManager, error) {
@@ -126,8 +129,13 @@ func NewGceManager() (VirtualMachineManager, error) {
 		projectId = "lmctfy-prod"
 	}
 	fmt.Printf("project id: %v\n", projectId)
+	service, err := NewCompute()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get compute service: %v", err)
+	}
 	ret := &gceVmManager{
 		projectId: projectId,
+		service:   service,
 	}
 	return ret, nil
 }
@@ -142,6 +150,26 @@ func getZone(spec *VirtualMachineSpec) string {
 
 func getImage(spec *VirtualMachineSpec) string {
 	return "ubuntu-trusty"
+}
+
+func getDiskName(spec *VirtualMachineSpec, instanceName string) string {
+	return fmt.Sprintf("disk-%v", instanceName)
+}
+
+func (self *gceVmManager) waitForOp(op *compute.Operation, zone string) error {
+	op, err := self.service.ZoneOperations.Get(self.projectId, zone, op.Name).Do()
+	for op.Status != "DONE" {
+		time.Sleep(5 * time.Second)
+		op, err = self.service.ZoneOperations.Get(self.projectId, zone, op.Name).Do()
+		if err != nil {
+			log.Printf("Got compute.Operation, err: %#v, %v", op, err)
+		}
+		if op.Status != "PENDING" && op.Status != "RUNNING" && op.Status != "DONE" {
+			log.Printf("Error waiting for operation: %s\n", op)
+			return errors.New(fmt.Sprintf("Bad operation: %s", op))
+		}
+	}
+	return err
 }
 
 func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineInfo, error) {
@@ -161,20 +189,29 @@ func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineI
 		}
 		return info, nil
 	*/
-	service, err := NewCompute()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get compute service: %v", err)
-	}
 	zone := getZone(spec)
 	prefix := "https://www.googleapis.com/compute/v1/projects/" + self.projectId
 	machineType := getMachineType(spec)
 	// /zones/us-central1-a/machineTypes/n1-standard-1
-	imgSrc := fmt.Sprintf("%v/zones/%v/disks/%v", prefix, zone, getImage(spec))
-	fmt.Printf("image src: %v\n", imgSrc)
-	imgSrc = "https://www.googleapis.com/compute/v1/projects/lmctfy-prod/zones/us-central1-a/disks/docker-root"
-	fmt.Printf("image src: %v\n", imgSrc)
+	// https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/backports-debian-7-wheezy-v20131127
+	imgSrc := fmt.Sprintf("%v/global/images/%v", prefix, getImage(spec))
+	// fmt.Printf("image src: %v\n", imgSrc)
+	instanceName := spec.GetName()
+	diskName := getDiskName(spec, instanceName)
+
+	opt, err := self.service.Disks.Insert(self.projectId, zone, &compute.Disk{
+		Name: diskName,
+	}).SourceImage(imgSrc).Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create disk: %v", err)
+	}
+	err = self.waitForOp(opt, zone)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create disk(): %v", err)
+	}
+	disklink := opt.TargetLink
 	instance := &compute.Instance{
-		Name:        spec.GetName(),
+		Name:        instanceName,
 		Description: "virtigo instance",
 		Zone:        fmt.Sprintf("%v/zones/%v", prefix, zone),
 		MachineType: fmt.Sprintf("%v/zones/%v/machineTypes/%v", prefix, zone, machineType),
@@ -191,17 +228,22 @@ func (self *gceVmManager) NewMachine(spec *VirtualMachineSpec) (*VirtualMachineI
 				Boot:   true,
 				Type:   "PERSISTENT",
 				Mode:   "READ_WRITE",
-				Source: imgSrc,
+				Source: disklink,
 			},
 		},
 	}
 	// pretty.Printf("%# v\n", instance)
 
-	opt, err := service.Instances.Insert(self.projectId, zone, instance).Do()
+	opt, err = self.service.Instances.Insert(self.projectId, zone, instance).Do()
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create vm: %v", err)
 	}
+	err = self.waitForOp(opt, zone)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create vm (opt): %v", err)
+	}
+
 	info := &VirtualMachineInfo{
 		Name: opt.Name,
 	}
