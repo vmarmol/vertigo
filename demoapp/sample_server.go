@@ -50,7 +50,7 @@ func main() {
 
 	// Register our work handler, to burn CPU.
 	nanoDelay := int64(*delay * 1000 * 1000) // Milli to Nano
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/burn", func(w http.ResponseWriter, r *http.Request) {
 		reqTime := time.Now()
 		timeSince := time.Since(reqTime)
 		for i := 0; timeSince.Nanoseconds() < nanoDelay; i++ {
@@ -60,6 +60,10 @@ func main() {
 			n = n / f
 			timeSince = time.Since(reqTime)
 		}
+		fmt.Fprintf(w, time.Since(startTime).String())
+	})
+	// Register a ping that does not burn cpu. Used by the health checker.
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, time.Since(startTime).String())
 	})
 
