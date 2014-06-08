@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 
 	"github.com/vmarmol/vertigo/gce"
 	"github.com/vmarmol/vertigo/vertlet/export"
@@ -48,9 +49,12 @@ func main() {
 
 	go func() {
 		for sig := range sigChan {
+			id := path.Base(sig.ContainerName)
 			switch sig.MoveDst {
 			case monitor.DST_LOWER:
+				mig.Migrate(id, false)
 			case monitor.DST_HIGHER:
+				mig.Migrate(id, true)
 			}
 		}
 	}()
