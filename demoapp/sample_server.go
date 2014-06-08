@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 )
@@ -19,6 +20,8 @@ var stateFile = flag.String("statefile", "/tmp/state", "where to store the state
 func main() {
 	flag.Parse()
 	startTime := time.Now()
+
+	runtime.GOMAXPROCS(runtime.NumCPU() * 2)
 
 	// Load state from statefile if it exists.
 	if _, err := os.Stat(*stateFile); err == nil {
