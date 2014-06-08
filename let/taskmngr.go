@@ -23,6 +23,7 @@ var endpoint = "unix:///var/run/docker.sock"
 
 type TaskManager interface {
 	RunTask(runspec *api.RunSpec) (containerSpec *api.ContainerSpec, err error)
+	Export(container *api.ContainerSpec, w io.Writer) error
 }
 
 func NewDockerTaskManager() (TaskManager, error) {
@@ -115,4 +116,21 @@ func (self *DockerTaskManager) RunTask(runspec *api.RunSpec) (containerSpec *api
 		Id: container.ID,
 	}
 	return
+}
+
+func (self *DockerTaskManager) StopTask(container *api.ContainerSpec) error {
+	return self.client.StopContainer(container.Id, 10)
+}
+
+func (self *DockerTaskManager) Export(container *api.ContainerSpec, w io.Writer) error {
+	err := self.StopTask(container)
+	if err != nil {
+		return err
+	}
+	opts := docker.ExportContainerOptions{
+		ID:           container.Id,
+		OutputStream: w,
+	}
+	err = self.client.ExportContainer(opts)
+	return err
 }

@@ -13,6 +13,10 @@ func main() {
 	rest := &restTaskManager{
 		taskManager: taskManager,
 	}
+	export := &taskExport{
+		taskManager: taskManager,
+	}
 	http.Handle("/task", rest)
+	http.Handle("/export/", export)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
