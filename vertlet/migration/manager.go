@@ -34,7 +34,7 @@ func NewMigrationHandler(port int, gceService *compute.Service) (*MigrationHandl
 }
 
 var MigrationStartHandler = "/migration/start"
-var MigrationMigrateHandler = "/migration/migrate"
+var MigrationMigrateHandler = "/migration/migrate/"
 
 func (self *MigrationHandler) RegisterHandlers() {
 	http.HandleFunc(MigrationStartHandler, func(w http.ResponseWriter, r *http.Request) {
@@ -47,8 +47,9 @@ func (self *MigrationHandler) RegisterHandlers() {
 	http.HandleFunc(MigrationMigrateHandler, func(w http.ResponseWriter, r *http.Request) {
 		if len(MigrationMigrateHandler) >= len(r.URL.Path) {
 			fmt.Fprintf(w, "Missing container name")
+			return
 		}
-		err := self.Migrate(r.URL.Path[len(MigrationMigrateHandler)+1:], true)
+		err := self.Migrate(r.URL.Path[len(MigrationMigrateHandler):], true)
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 		}
