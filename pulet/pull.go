@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"os/user"
 	"time"
 )
 
@@ -31,6 +32,13 @@ type Pulet struct {
 }
 
 func NewPulet() *Pulet {
+	u, err := user.Current()
+	if err != nil {
+		panic(err.Error())
+	}
+	if u.Username != "root" {
+		panic("must be root!")
+	}
 	return &Pulet{}
 }
 
