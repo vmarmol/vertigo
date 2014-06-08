@@ -8,6 +8,7 @@ import (
 	"log"
 	"os/exec"
 	"os/user"
+	"strings"
 	"time"
 )
 
@@ -76,6 +77,7 @@ func (self *Pulet) RunImage(img *ImageSpec, runArgs []string, cmdList []string) 
 	if err != nil {
 		return "", err
 	}
-	log.Printf("output of docker: %v\n", string(output))
-	return string(output), nil
+	log.Printf("output of docker: %v", string(output))
+	containerId := strings.Trim(string(output), "\n \t")
+	return containerId, nil
 }

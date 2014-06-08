@@ -70,7 +70,7 @@ func (self *MigrationHandler) handleMigrationStart(w http.ResponseWriter, r *htt
 		return err
 	}
 
-	log.Printf("Tracking the container! %+v\n", containerId)
+	log.Printf("Tracking the container! %+v", containerId)
 	err = self.containerTracker.TrackContainer(containerId)
 	if err != nil {
 		log.Printf("TrackingContainer error: %v", err)
