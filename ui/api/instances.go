@@ -44,6 +44,11 @@ func getUsage(instance string) (int, int, error) {
 	}
 	trackedId := tracked.Tracked
 
+	// Not tracking a container, no usage then.
+	if trackedId == "" {
+		return 0, 0, nil
+	}
+
 	// Get the usage from cAdvisor.
 	log.Printf("Instance %q is tracking: %q", instance, trackedId)
 	c, err := cadvisor.NewClient(fmt.Sprintf("http://%s:5000/", instance))

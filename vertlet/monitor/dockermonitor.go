@@ -76,7 +76,7 @@ func (self *DockerMonitor) TrackContainer(id string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("cannot find container %v", id)
+	return fmt.Errorf("cannot find container %v aka: %q", id, cpath)
 }
 
 func (self *DockerMonitor) StopTrackingContainer(id string) error {

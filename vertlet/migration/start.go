@@ -67,7 +67,10 @@ func (self *MigrationHandler) handleMigrationStart(w http.ResponseWriter, r *htt
 		return err
 	}
 
-	self.containerTracker.TrackContainer(request.Container)
+	err = self.containerTracker.TrackContainer(request.Container)
+	if err != nil {
+		return err
+	}
 
 	log.Printf("Request(%s) for container %q took %s", MigrationStartHandler, request.Container, time.Since(start))
 	return nil
