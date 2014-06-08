@@ -69,8 +69,6 @@ func (self *Pulet) RunImage(img *ImageSpec, runArgs []string, cmdList []string) 
 	args = append(args, alias)
 	args = append(args, cmdList...)
 
-	time.Sleep(3 * time.Second)
-
 	log.Printf("docker %+v", args)
 	cmd := exec.Command("docker", args...)
 	err := cmd.Run()

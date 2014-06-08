@@ -35,7 +35,7 @@ func RegisterHandlers(gceService *compute.Service) {
 			Container: "c7d4f0543e92",
 			Host:      "vertigo-0",
 			Port:      8080,
-			Command:   []string{"/bin/sleep 2m"},
+			Command:   []string{"/bin/sleep", "2m"},
 		}
 		err := handleMigration(request, "vertigo-1:8080", gceService)
 		if err != nil {
