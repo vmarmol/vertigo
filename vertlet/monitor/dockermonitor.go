@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/google/lmctfy/cadvisor/client"
 )
@@ -21,6 +20,8 @@ type DockerMonitor struct {
 
 type ContainerTracker interface {
 	TrackContainer(id string) error
+	StopTrackingContainer(id string) error
+	GetTrackedContainer() string
 }
 
 func StartDockerMonitor(
@@ -76,25 +77,10 @@ func (self *DockerMonitor) TrackContainer(id string) error {
 	return fmt.Errorf("cannot find container %v", id)
 }
 
-func (self *DockerMonitor) addSubContainers(containers []string) {
-	for _, c := range containers {
-		if _, ok := self.subcontainers[c]; !ok {
-			m, err := NewContainerMonitor(self.cadvisorUrl, c, self.cpuLowThreshold, self.cpuHighThreshold, self.sigChan)
-			if err != nil {
-				log.Printf("unable to create sub container monitor: %v", err)
-			}
-			self.subcontainers[c] = m
-		}
-	}
+func (self *DockerMonitor) StopTrackingContainer(id string) error {
+	return nil
 }
 
-func (self *DockerMonitor) checkDockerContainers() {
-	for {
-		cinfo, err := self.client.ContainerInfo("/docker")
-		if err != nil {
-			log.Printf("error: %v", err)
-		}
-		self.addSubContainers(cinfo.Subcontainers)
-		time.Sleep(1500 * time.Millisecond)
-	}
+func (self *DockerMonitor) GetTrackedContainer() string {
+	return ""
 }

@@ -72,19 +72,24 @@ func NewMigrationHandler(port int, gceService *compute.Service) (*MigrationHandl
 
 var MigrationStartHandler = "/migration/start"
 var MigrationMigrateHandler = "/migration/migrate/"
+var TrackedContainer = "/tracked"
 var TrackContainer = "/track/"
 
 func (self *MigrationHandler) RegisterHandlers() {
 	http.HandleFunc(MigrationStartHandler, func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
 		err := self.handleMigrationStart(w, r)
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 		}
 	})
 
+	// Get what container is being tracked.
+	http.HandleFunc(TrackedContainer, func(w http.ResponseWriter, r *http.Request) {
+		id := self.containerTracker.GetTrackedContainer()
+		fmt.Fprintf(w, "{\"tracked\": %q}", id)
+	})
+
 	http.HandleFunc(TrackContainer, func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
 		if len(TrackContainer) >= len(r.URL.Path) {
 			fmt.Fprintf(w, "missing container id")
 		}
@@ -97,7 +102,6 @@ func (self *MigrationHandler) RegisterHandlers() {
 	})
 
 	http.HandleFunc(MigrationMigrateHandler, func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
 		if len(MigrationMigrateHandler) >= len(r.URL.Path) {
 			fmt.Fprintf(w, "Missing container name")
 			return
