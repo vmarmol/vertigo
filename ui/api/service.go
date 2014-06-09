@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 	"time"
 )
 
-var url = flag.String("url", "http://107.178.208.130:80/burn", "Url to serve traffic to.")
+var url = flag.String("url", "http://107.178.208.130:80/", "Url to serve traffic to.")
 var initQps = flag.Int("init_qps", 1, "Number of queries per second to initially send.")
 
 var nsInSecond = int64(1000 * 1000 * 1000)
@@ -20,15 +21,12 @@ var latency = "None."
 
 func sendQueries() {
 	for true {
-		for nanoDelay == 0 {
-			time.Sleep(time.Duration(nsInSecond))
-		}
-		time.Sleep(time.Duration(nanoDelay))
-		go sendOneQuery()
+		time.Sleep(1 * time.Second)
+		updateStats()
 	}
 }
 
-func sendOneQuery() {
+func updateStats() {
 	sendTime := time.Now()
 	resp, err := http.Get(*url)
 	latency = time.Since(sendTime).String()
@@ -46,6 +44,20 @@ func sendOneQuery() {
 	log.Printf("New Uptime: %s", uptime)
 }
 
+func updateBurn(units int) {
+	resp, err := http.Get(fmt.Sprintf("%sburn/%d", *url, units))
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("%v: %v", err, body)
+		return
+	}
+}
+
 type queryInfo struct {
 	Uptime  string `json:"uptime"`
 	Latency string `json:"latency"`
@@ -60,11 +72,7 @@ func RegisterServiceHandlers() {
 			log.Printf("%v", err)
 			return
 		}
-		if qps == 0 {
-			nanoDelay = 0
-		} else {
-			nanoDelay = nsInSecond / int64(qps)
-		}
+		updateBurn(qps)
 		log.Printf("Request(/api/qps) took %s", time.Since(start))
 	})
 	http.HandleFunc("/api/uptime", func(w http.ResponseWriter, r *http.Request) {
