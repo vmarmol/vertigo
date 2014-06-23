@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"code.google.com/p/google-api-go-client/compute/v1"
-	"github.com/google/lmctfy/cadvisor/client"
+	"github.com/google/cadvisor/client"
 	"github.com/vmarmol/vertigo/instances"
 )
 
