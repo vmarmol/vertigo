@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/lmctfy/cadvisor/client"
-	"github.com/google/lmctfy/cadvisor/info"
+	"github.com/google/cadvisor/client"
+	"github.com/google/cadvisor/info"
 )
 
 type ContainerMonitor struct {

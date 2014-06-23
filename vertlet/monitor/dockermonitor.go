@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/lmctfy/cadvisor/client"
+	"github.com/google/cadvisor/client"
 )
 
 type DockerMonitor struct {
@@ -59,20 +59,20 @@ func (self *DockerMonitor) TrackContainer(id string) error {
 	self.lock.Lock()
 	defer self.lock.Unlock()
 	for _, sub := range cinfo.Subcontainers {
-		if strings.HasPrefix(sub, cpath) {
-			if _, ok := self.subcontainers[sub]; ok {
+		if strings.HasPrefix(sub.Name, cpath) {
+			if _, ok := self.subcontainers[sub.Name]; ok {
 				return nil
 			}
 			m, err := NewContainerMonitor(
 				self.cadvisorUrl,
-				sub,
+				sub.Name,
 				self.cpuLowThreshold,
 				self.cpuHighThreshold,
 				self.sigChan)
 			if err != nil {
 				return err
 			}
-			self.subcontainers[sub] = m
+			self.subcontainers[sub.Name] = m
 			return nil
 		}
 	}

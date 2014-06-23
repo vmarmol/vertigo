@@ -3,6 +3,7 @@ package gce
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,6 +17,8 @@ import (
 	"code.google.com/p/goauth2/oauth"
 	"code.google.com/p/google-api-go-client/compute/v1"
 )
+
+var credentialsDir = flag.String("credentials_dir", "/home/vmarmol", "Directory holding user credentials")
 
 type gcloudCredentialsCache struct {
 	Data []gceConfig
@@ -43,8 +46,7 @@ func getOauthToken() (*gceCredential, error) {
 	if err != nil {
 		return nil, err
 	}
-	//confPath := path.Join(usr.HomeDir, ".config/gcloud/credentials")
-	confPath := path.Join("/home/vmarmol", ".config/gcloud/credentials")
+	confPath := path.Join(*credentialsDir, ".config/gcloud/credentials")
 	f, err := os.Open(confPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load gcloud credentials: %q", confPath)
